@@ -23,6 +23,7 @@
 TRoll diceRoll, diceDiscarded, diceSelected;
 
 void main(void) {
+   u8 color1, color2, aux_color;
 
    cpct_disableFirmware();
    
@@ -32,7 +33,10 @@ void main(void) {
    roll_dice(&diceRoll);
    render_dice(&diceRoll, 30, 14);
 
-   draw_marker(29, 12, 8, 15, 2, 6);
+   color1=4;
+   color2=6;
+
+   draw_marker(28, 12, 10, 18, 2, color1,color2);
 
    // Loop forever
    while (1){
@@ -40,6 +44,10 @@ void main(void) {
       if (cpct_isAnyKeyPressed()){
          roll_dice(&diceRoll);
          render_dice(&diceRoll, 30, 14);
+         aux_color = color1;
+         color1 = color2;
+         color2 = aux_color;
+         draw_marker(28, 12, 10, 18, 2, color1,color2);
       }
    };
 

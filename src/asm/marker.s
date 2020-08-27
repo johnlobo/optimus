@@ -22,6 +22,7 @@
 ;;
 .globl cpct_getScreenPtr_asm
 .globl cpct_px2byteM0_asm
+.globl _draw_marker
 
 
 
@@ -33,46 +34,117 @@
 ;			- width
 ;			- Hight
 ;			- thickness
-;           - color
+;           - color1
+;           - color2
 ;	Output:	
 ;	Destroyed registers: AF, HL, DE, BC
 ;
 ;******************************
-.globl _draw_marker
-_draw_marker::	
-    width: .db 0
-    y-bottom: .db 0
-    color: .db 0
+
+_draw_marker::
+
 	push ix
 
 	ld ix,#4
 	add ix,sp
 
-    ;; store the marker color
-    ld a,5 (ix)
-    ld h,a
-    ld l,a
+    ;; calculate and store the marker color
+    ld h,5 (ix)
+    ld l,6 (ix)
     call cpct_px2byteM0_asm
     ld (color),a
-	
-	ld a,0 (ix)				;get x coord
-	ld c,a
-	ld a,1 (ix)				;get y coord
-	ld b,a
+
+top_line:
+    ;; calculate top left screen address
+	ld c,0 (ix)				;get x coord
+	ld b,1 (ix)				;get y coord
     ld de, #0xC000
     call cpct_getScreenPtr_asm
 
-    ld a,2 (ix)             ;get width
-    ld b,a
+    ld b,2 (ix)             ;get width
 
-draw_rectangle:
-top:
-    ld a, (color)
-    ld (hl), a
-    inc hl
-    djnz draw_rectangle
-bottom:
+    call _draw_line          ;draw top line
+
+columns:
+    ld c,0 (ix)				;get x coord
+    ld b,1 (ix)				;get y coord
+    inc b                   ;one line below top
+    ld e,2 (ix)				;get width
+    ld d,3 (ix)				;get height
+    dec d                   ;minus top and bottom line
+
+    call _draw_columns
+
+bottom_line:
+    ;; calculate bottom left screen address
+    ld c,0 (ix)				;get x coord
+	ld a,1 (ix)				;get y coord
+    ld b,3 (ix)             ;get height
+    add b                   ;y + height
+    ld b,a                  
+    ld de, #0xC000
+    call cpct_getScreenPtr_asm
+
+    ld b,2 (ix)             ;get width
+    
+    call _draw_line          ;draw bottom line
 
     pop ix
 
 	ret
+
+    color: .db 0
+
+;******************************
+; 	Desc:	Draws a horizontal line on the mode 0 screen
+;	Input:	- HL screen address
+;			- b width 
+;	Output:	
+;	Destroyed registers: AF, HL, DE, BC
+;
+;******************************
+_draw_line::
+    ld a, (color)
+loop:
+    ld (hl), a
+    inc hl
+    djnz loop
+    ret
+
+;******************************
+; 	Desc:	Draws two columns on the mode 0 screen
+;	Input:	- c x_coord
+;			- b y_coord
+;           - d height
+;           - e width
+;	Output:	
+;	Destroyed registers: AF, HL, DE, BC
+;
+;******************************
+_draw_columns::
+loop_2:
+    push bc
+    push de
+    ld de, #0xC000
+    call cpct_getScreenPtr_asm  ;get screen address
+    ld a, (color)
+left_column:
+    ld (hl), a
+right_column:
+    pop de
+    push de
+    ld c,e                   ;get width
+    ld b,#0
+    add hl,bc
+    dec hl
+    ld (hl), a
+
+    pop de
+    pop bc
+
+    inc b                   ;increase y coord
+    dec d                   ;decrease height
+    ld a,d
+    or a                    ;reach height limit??
+    jr nz, loop_2
+    ret

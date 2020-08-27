@@ -28,7 +28,7 @@ void init_render();
 
 void render_dice(TRoll *roll, u8 x, u8 y);
 
-u8 draw_marker(u8 x, u8 y, u8 w, u8 h, u8 t, u8 c);
+u8 draw_marker(u8 x, u8 y, u8 w, u8 h, u8 t, u8 c1, u8 c2);
 
 #endif
 
