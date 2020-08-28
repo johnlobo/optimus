@@ -35,7 +35,6 @@
 ;			- Hight
 ;			- thickness
 ;           - color1
-;           - color2
 ;	Output:	
 ;	Destroyed registers: AF, HL, DE, BC
 ;
@@ -50,7 +49,7 @@ _draw_marker::
 
     ;; calculate and store the marker color
     ld h,5 (ix)
-    ld l,6 (ix)
+    ld l,h
     call cpct_px2byteM0_asm
     ld (color),a
 
